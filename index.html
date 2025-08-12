@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planet Flashcards</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: black url('https://cdn.jsdelivr.net/gh/matteobruni/tsparticles/assets/images/stars.jpg') repeat;
+      background-size: cover;
+      color: white;
+      text-align: center;
+    }
+    .flashcard {
+      display: inline-block;
+      margin: 20px;
+      padding: 20px;
+      border: 2px solid white;
+      cursor: pointer;
+      width: 150px;
+      height: 200px;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: transform 0.2s;
+    }
+    .flashcard:hover {
+      transform: scale(1.05);
+    }
+    #planetModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 999;
+    }
+    #planetCanvas {
+      width: 80%;
+      height: 80%;
+    }
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Planet Flashcards</h1>
+  
+  <div class="flashcard" data-planet="Earth">Earth</div>
+  <div class="flashcard" data-planet="Jupiter">Jupiter</div>
+  <div class="flashcard" data-planet="Mars">Mars</div>
+  <div class="flashcard" data-planet="Mercury">Mercury</div>
+  <div class="flashcard" data-planet="Neptune">Neptune</div>
+  <div class="flashcard" data-planet="Saturn">Saturn</div>
+  <div class="flashcard" data-planet="Uranus">Uranus</div>
+  <div class="flashcard" data-planet="Venus">Venus</div>
+
+  <div id="planetModal">
+    <span class="close-btn">&times;</span>
+    <canvas id="planetCanvas"></canvas>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const planetTextures = {
+      Earth:   "textures/earth.jpg",
+      Jupiter: "textures/jupiter.jpg",
+      Mars:    "textures/mars.jpg",
+      Mercury: "textures/mercury.jpg",
+      Neptune: "textures/neptune.jpg",
+      Saturn:  "textures/saturn.jpg",
+      Uranus:  "textures/uranus.jpg",
+      Venus:   "textures/venus.jpg"
+    };
+
+    const flashcards = document.querySelectorAll('.flashcard');
+    const modal = document.getElementById('planetModal');
+    const closeBtn = document.querySelector('.close-btn');
+
+    let scene, camera, renderer, planetMesh, animateId;
+
+    flashcards.forEach(card => {
+      card.addEventListener('dblclick', () => {
+        showPlanet(card.dataset.planet);
+      });
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      cancelAnimationFrame(animateId);
+      renderer.dispose();
+    });
+
+    function showPlanet(planetName) {
+      modal.style.display = 'flex';
+
+      const canvas = document.getElementById('planetCanvas');
+      scene = new THREE.Scene();
+
+      // Background starfield
+      const loader = new THREE.TextureLoader();
+      loader.load('https://cdn.jsdelivr.net/gh/matteobruni/tsparticles/assets/images/stars.jpg', texture => {
+        scene.background = texture;
+      });
+
+      camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+
+      const geometry = new THREE.SphereGeometry(2, 64, 64);
+      const texture = loader.load(planetTextures[planetName]);
+      const material = new THREE.MeshStandardMaterial({ map: texture });
+      planetMesh = new THREE.Mesh(geometry, material);
+      scene.add(planetMesh);
+
+      const light = new THREE.PointLight(0xffffff, 1.2);
+      light.position.set(5, 5, 5);
+      scene.add(light);
+
+      camera.position.z = 5;
+
+      function animate() {
+        animateId = requestAnimationFrame(animate);
+        planetMesh.rotation.y += 0.002;
+        renderer.render(scene, camera);
+      }
+      animate();
+    }
+  </script>
+</body>
+</html>
